@@ -1,0 +1,24 @@
+linedict - a simple dictionary using Youdao webpage
+====================
+linedict is an efficient dictionary for X.
+
+
+Requirements
+------------
+In order to build dmenu you need the Xlib,pcre,libcurl header files.
+
+
+Installation
+------------
+Edit config.mk to match your local setup (linedict is installed into
+the /usr/local namespace by default).
+
+Afterwards enter the following command to build and install linedict
+(if necessary as root):
+
+    make clean install
+
+
+Running linedict
+-------------
+run linedict

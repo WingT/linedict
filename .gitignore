@@ -1,0 +1,6 @@
+cscope*
+*.o
+config.h
+linedict
+*.swp
+#*
