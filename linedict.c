@@ -29,7 +29,6 @@ enum { SchemeNorm, SchemeSel, SchemeOut, SchemeLast }; /* color schemes */
 
 static char text[BUFSIZ] = "";
 
-static char *embed;
 static int bh, mw, mh;
 static int lrpad; /* sum of left and right padding */
 static size_t cursor;
@@ -139,8 +138,6 @@ grabkeyboard(void)
 	struct timespec ts = { .tv_sec = 0, .tv_nsec = 1000000  };
 	int i;
 
-	if (embed)
-		return;
 	/* try to grab keyboard, we may have to wait for another process to ungrab */
 	for (i = 0; i < 1000; i++) {
 		if (XGrabKeyboard(dpy, DefaultRootWindow(dpy), True, GrabModeAsync,
@@ -416,15 +413,7 @@ setup(void)
 	                XNClientWindow, win, XNFocusWindow, win, NULL);
 
 	XMapRaised(dpy, win);
-	if (embed) {
-		XSelectInput(dpy, parentwin, FocusChangeMask);
-		if (XQueryTree(dpy, parentwin, &dw, &w, &dws, &du) && dws) {
-			for (i = 0; i < du && dws[i] != win; ++i)
-				XSelectInput(dpy, dws[i], FocusChangeMask);
-			XFree(dws);
-		}
-		grabfocus();
-	}
+
 	draw_input();
 }
 
@@ -439,8 +428,7 @@ main(int argc, char *argv[])
 		die("cannot open display");
 	screen = DefaultScreen(dpy);
 	root = RootWindow(dpy, screen);
-	if (!embed || !(parentwin = strtol(embed, NULL, 0)))
-		parentwin = root;
+	parentwin = root;
 	if (!XGetWindowAttributes(dpy, parentwin, &wa))
 		die("could not get embedding window attributes: 0x%lx",
 		    parentwin);
