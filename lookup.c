@@ -12,6 +12,7 @@ char yd_pronounce[BUFSIZ];
 char yd_meaning[MAXMEANING][BUFSIZ];
 char yd_translation[BUFSIZ];
 char yd_output_text[BUFSIZ];
+char word_buf[BUFSIZ];
 
 int offset;
 
@@ -141,6 +142,19 @@ void urlencode(char *s){
 	free(r);
 }
 
+void strip(char *txt){
+	int ptr=0;
+	int i;
+	for (i=0;txt[i]==' ';i++)
+		;
+	int j;
+	for (j=strlen(txt)-1;j>i && txt[i]==' ';j--)
+		;
+	for (int k=i;k<=j;k++)
+		word_buf[ptr++]=txt[k];
+	word_buf[ptr]=0;
+}
+
 size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata){
 	size_t cnt=size*nmemb;
 	for (int i=0;i<cnt;i++)
@@ -155,12 +169,18 @@ char * lookup(char *txt){
     int still_running;
     int repeats=0;
 
+    if (txt==NULL)
+	    return NULL;
+    strip(txt);
+    if (!word_buf[0])
+	    return NULL;
+
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     single = curl_easy_init();
     if (single==NULL)
-	    return 0;
-    urlencode(txt);
+	    return NULL;
+    urlencode(word_buf);
     curl_easy_setopt(single, CURLOPT_URL, url);        
     struct curl_slist *chunk = NULL;
     chunk = curl_slist_append(chunk, "User-Agent: curl/7.56.1");
@@ -171,7 +191,7 @@ char * lookup(char *txt){
     if (multi==NULL){
 	    curl_easy_cleanup(single);
 	    curl_slist_free_all(chunk);
-	    return 0;
+	    return NULL;
     }
     curl_multi_add_handle(multi,single);
 

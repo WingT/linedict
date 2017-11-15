@@ -82,6 +82,13 @@ draw_input(void)
 static void
 draw_output(char *txt)
 {
+	if (txt==NULL || !txt[0]){
+		if (result_win!=0){
+			XDestroyWindow(dpy,result_win);
+			result_win=0;
+		}
+		return ;
+	}
 
 	char *lines[1000];
 	lines[0]=txt;
@@ -93,8 +100,10 @@ draw_output(char *txt)
 		}
 
 
-	if (result_win!=NULL)
+	if (result_win!=0){
 		XDestroyWindow(dpy,result_win);
+		result_win=0;
+	}
 
 	if (line_cnt==0)
 		return ;
@@ -385,7 +394,7 @@ setup(void)
 					break;
 
 		x = info[i].x_org;
-		y = info[i].y_org + (topbar ? 0 : info[i].height - mh);
+		y = info[i].y_org;
 		mw = info[i].width;
 		XFree(info);
 	} else
@@ -395,7 +404,7 @@ setup(void)
 			die("could not get embedding window attributes: 0x%lx",
 			    parentwin);
 		x = 0;
-		y = topbar ? 0 : wa.height - mh;
+		y = 0;
 		mw = wa.width;
 	}
 
