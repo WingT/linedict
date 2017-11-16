@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <pcre.h>
 #include <string.h>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
+#include <X11/extensions/Xinerama.h>
+#include <X11/Xft/Xft.h>
 #define MAXMEANING 20
 
 char baseurl[]="http://dict.youdao.com/w/eng/%s/#keyfrom=dict2.index";
@@ -163,11 +168,60 @@ size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata){
 	yd_content[offset]=0;
 	return cnt;
 }
+
+extern Display *dpy;
+extern Window win;
+extern XIC xic;
+
+int check_key_cancel(XKeyEvent *ev){
+	char buf[32];
+	int len;
+	KeySym ksym = NoSymbol;
+	Status status;
+
+	len = XmbLookupString(xic, ev, buf, sizeof buf, &ksym, &status);
+	if (status == XBufferOverflow)
+		return 0;
+	switch(ksym){
+		case XK_c:
+			return 1;
+		default:
+			return 0;
+	}
+	return 0;
+
+}
+
+int check_event(void){
+	XEvent ev;
+	int n = XEventsQueued(dpy, QueuedAfterReading);
+	if (n==0)
+		return 0;
+	else{
+		int stat=XNextEvent(dpy,&ev);
+		if (stat)
+			return stat;
+		else{
+			if (XFilterEvent(&ev, win))
+				return stat;
+			switch(ev.type) {
+			case KeyPress:
+				return check_key_cancel(&ev.xkey);
+			default:
+				break;
+			}
+			return stat;
+		}
+	}
+	return 0;
+}
+
 char * lookup(char *txt){
     CURL *single;
     CURLM *multi;
     int still_running;
     int repeats=0;
+    int cancel_flag=0;
 
     if (txt==NULL)
 	    return NULL;
@@ -217,7 +271,9 @@ char * lookup(char *txt){
       		repeats = 0;
 
 	    curl_multi_perform(multi, &still_running);
-    }while(still_running);
+
+	    cancel_flag=check_event();
+    }while(still_running && !cancel_flag);
 
 
     curl_multi_remove_handle(multi, single);
@@ -226,12 +282,16 @@ char * lookup(char *txt){
     curl_multi_cleanup(single);
     curl_global_cleanup();
 
-    yd_find_pronounce();
-    yd_find_meaning();
-    if (yd_meaning[0][0]==0)
-    	yd_find_translation();
+    yd_output_text[0]=0;
 
-    yd_construct_result();
+    if (!cancel_flag){
+    	yd_find_pronounce();
+    	yd_find_meaning();
+    	if (yd_meaning[0][0]==0)
+    		yd_find_translation();
+
+    	yd_construct_result();
+    }
 
     return yd_output_text;
 }

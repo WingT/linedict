@@ -10,9 +10,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
-#ifdef XINERAMA
 #include <X11/extensions/Xinerama.h>
-#endif
 #include <X11/Xft/Xft.h>
 
 #include "drw.h"
@@ -35,9 +33,10 @@ static size_t cursor;
 static int mon = -1, screen;
 
 static Atom clip, utf8;
-static Display *dpy;
-static Window root, parentwin, win,result_win;
-static XIC xic;
+Display *dpy;
+Window win;
+static Window root, parentwin,result_win;
+XIC xic;
 
 static Drw *drw;
 static Clr *scheme[SchemeLast];
