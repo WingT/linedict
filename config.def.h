@@ -5,12 +5,9 @@
 static const char *fonts[] = {
 	"monospace:size=12"
 };
-static const char *colors[SchemeLast][2] = {
+static const char *colors[2] = 
 	/*     fg         bg       */
-	[SchemeNorm] = { "#bbbbbb", "#222222" },
-	[SchemeSel] = { "#eeeeee", "#005577" },
-	[SchemeOut] = { "#000000", "#00ffff" },
-};
+	{ "#bbbbbb", "#222222" };
 
 /*
  * Characters not considered part of a word while deleting words

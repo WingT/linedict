@@ -22,9 +22,6 @@
 #define LENGTH(X)             (sizeof X / sizeof X[0])
 #define TEXTW(X)              (drw_fontset_getwidth(drw, (X)) + lrpad)
 
-/* enums */
-enum { SchemeNorm, SchemeSel, SchemeOut, SchemeLast }; /* color schemes */
-
 static char text[BUFSIZ] = "";
 
 static int bh, mw, mh;
@@ -39,7 +36,7 @@ static Window root, parentwin,result_win;
 XIC xic;
 
 static Drw *drw;
-static Clr *scheme[SchemeLast];
+static Clr *scheme;
 
 #include "config.h"
 
@@ -48,11 +45,8 @@ char *lookup(char *txt);
 static void
 cleanup(void)
 {
-	size_t i;
-
 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
-	for (i = 0; i < SchemeLast; i++)
-		free(scheme[i]);
+	free(scheme);
 	drw_free(drw);
 	XSync(dpy, False);
 	XCloseDisplay(dpy);
@@ -64,16 +58,14 @@ draw_input(void)
         unsigned int curpos;
         int x = 0;
 
-        drw_setscheme(drw, scheme[SchemeNorm]);
+        drw_setscheme(drw, scheme);
         drw_rect(drw, 0, 0, mw, mh, 1, 1);
 
         /* draw input field */
-        drw_setscheme(drw, scheme[SchemeNorm]);
         drw_text(drw, x, 0, 0, bh, lrpad / 2, text, 0);
 
         drw_font_getexts(drw->fonts, text, cursor, &curpos, NULL);
 	curpos+=lrpad/2-1;
-        drw_setscheme(drw, scheme[SchemeNorm]);
         drw_rect(drw, x + curpos, 2, 2, bh - 4, 1, 0);
         drw_map(drw, win, 0, 0, mw, mh);
 }
@@ -110,7 +102,7 @@ draw_output(char *txt)
 	XSetWindowAttributes swa;
 	/* create result window */
 	swa.override_redirect = True;
-	swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
+	swa.background_pixel = scheme[ColBg].pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
 	result_win = XCreateWindow(dpy, parentwin, 0, mh, mw, mh*line_cnt, 0,
 	                    CopyFromParent, CopyFromParent, CopyFromParent,
@@ -357,9 +349,7 @@ setup(void)
 #endif
 
 	/* init appearance */
-	scheme[SchemeNorm] = drw_scm_create(drw, colors[SchemeNorm], 2);
-	scheme[SchemeSel] = drw_scm_create(drw, colors[SchemeSel], 2);
-	scheme[SchemeOut] = drw_scm_create(drw, colors[SchemeOut], 2);
+	scheme = drw_scm_create(drw, colors, 2);
 
 	clip = XInternAtom(dpy, "CLIPBOARD",   False);
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
@@ -409,7 +399,7 @@ setup(void)
 
 	/* create menu window */
 	swa.override_redirect = True;
-	swa.background_pixel = scheme[SchemeNorm][ColBg].pixel;
+	swa.background_pixel = scheme[ColBg].pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
 	win = XCreateWindow(dpy, parentwin, x, y, mw, mh, 0,
 	                    CopyFromParent, CopyFromParent, CopyFromParent,
@@ -425,10 +415,39 @@ setup(void)
 	draw_input();
 }
 
+static void
+usage(void)
+{
+        fputs("usage: linedict [-v] [-fn font] [-m monitor]\n"
+              "[-bg color] [-fg color]\n", stderr);
+        exit(1);
+}
+
+
 int
 main(int argc, char *argv[])
 {
 	XWindowAttributes wa;
+
+	for (int i = 1; i < argc; i++)
+                /* these options take no arguments */
+                if (!strcmp(argv[i], "-v")) {      /* prints version information */
+                        puts("linedict-"VERSION);
+                        exit(0);
+                } 
+		else if (i + 1 == argc)
+                        usage();
+                /* these options take one argument */
+                else if (!strcmp(argv[i], "-m"))
+                        mon = atoi(argv[++i]);
+                else if (!strcmp(argv[i], "-fn"))  /* font or font set */
+                        fonts[0] = argv[++i];
+                else if (!strcmp(argv[i], "-bg"))  /* background color */
+                        colors[ColBg] = argv[++i];
+                else if (!strcmp(argv[i], "-fg"))  /* background color */
+                        colors[ColFg] = argv[++i];
+                else
+                        usage();
 
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		fputs("warning: no locale support\n", stderr);
