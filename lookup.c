@@ -175,16 +175,15 @@ extern XIC xic;
 
 int check_key_cancel(XKeyEvent *ev){
 	char buf[32];
-	int len;
 	KeySym ksym = NoSymbol;
 	Status status;
 
-	len = XmbLookupString(xic, ev, buf, sizeof buf, &ksym, &status);
+	XmbLookupString(xic, ev, buf, sizeof buf, &ksym, &status);
 	if (status == XBufferOverflow)
 		return 0;
 	switch(ksym){
 		case XK_c:
-			return 1;
+			return (ev->state & ControlMask);
 		default:
 			return 0;
 	}
