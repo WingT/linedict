@@ -5,7 +5,7 @@ linedict is an efficient dictionary for X.
 
 Requirements
 ------------
-In order to build dmenu you need the Xlib,pcre,libcurl header files.
+In order to build linedict you need the Xlib,pcre,libcurl header files.
 
 
 Installation

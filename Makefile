@@ -32,4 +32,14 @@ clean:
 	@echo cleaning
 	@rm -f linedict config.h ${OBJ}
 
-.PHONY: all options clean
+install:all
+	@echo installing executables to ${DESTDIR}${PREFIX}/bin
+	@mkdir -p ${DESTDIR}${PREFIX}/bin
+	@cp -f linedict ${DESTDIR}${PREFIX}/bin
+	@chmod 755 ${DESTDIR}${PREFIX}/bin/linedict
+
+uninstall:
+	@echo removing executables from ${DESTDIR}${PREFIX}/bin
+	@rm -f ${DESTDIR}${PREFIX}/bin/linedict
+
+.PHONY: all options clean install
