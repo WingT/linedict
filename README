@@ -28,4 +28,4 @@ Features to add
 1.add scroll support for long content,eg. ISR
 2.add more wise answer selection support,eg. show web translation when no result available
 3.add input method support for Chinese -> English translation
-4.add recognition when there are html tags within the result
+4.add recognition when there are html tags within the result,eg. hurlyburly & hurly burly
